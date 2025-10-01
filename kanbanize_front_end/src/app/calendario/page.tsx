@@ -10,6 +10,12 @@ import moment from 'moment'
 import _ from 'lodash'
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import './rbc_css.css'
+
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
+
+const DnDCalendar = withDragAndDrop(Calendar)
 
 const localizer = dateFnsLocalizer({
     format,
@@ -20,7 +26,6 @@ const localizer = dateFnsLocalizer({
 })
 
 export default function Calendario() {
-
     const [tasks, setTasks] = useState<any>([])
     const [modal, setModal] = useState({ toggle: false, content: {} })
 
@@ -61,7 +66,6 @@ export default function Calendario() {
                 idUser: 1,
             })
         }
-
         await getTasksContent()
     }
 
@@ -72,44 +76,56 @@ export default function Calendario() {
     const handleSelectEvent = (event: any) => {
         setModal({ toggle: true, content: event })
     }
-    
+
     return (
-        <div 
-            style={{ 
-                height: '100vh', 
-                padding: '20px', 
-                background: "#fff" 
-            }}
-        >
-            {!!modal.toggle && 
+        <div style={{ height: '88vh', padding: '5px', background: "#fff" }}>
+            {!!modal.toggle &&
                 <TaskModal
                     task={modal.content}
                     onClose={() => setModal({ toggle: false, content: {} })}
                     onSave={async (task) => {
-                        await saveTask(task);
-                        setModal({ toggle: false, content: {} });
-                }}
-            />}
-            <Calendar
+                        await saveTask(task)
+                        setModal({ toggle: false, content: {} })
+                    }}
+                />
+            }
+
+            <DnDCalendar
                 selectable
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
                 localizer={localizer}
                 events={tasks}
                 startAccessor="start"
                 endAccessor="end"
                 culture="pt-BR"
-                eventPropGetter={(event) => {
-                    return {
-                        style: {
-                            backgroundColor: event.color || '#2b7fff',
-                            color: 'white',
-                            borderRadius: '5px',
-                            border: 'none',
-                            display: 'block',
-                        },
-                    };
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                onEventDrop={({ event, start, end }) => {
+                    saveTask({
+                        ...event,
+                        start,
+                        end,
+                        date: moment(start).utc().format("YYYY-MM-DD")
+                    })
                 }}
+                onEventResize={({ event, start, end }) => {
+                    saveTask({
+                        ...event,
+                        start,
+                        end,
+                        date: moment(start).utc().format("YYYY-MM-DD")
+                    })
+                }}
+                resizable
+                draggableAccessor={() => true}
+                eventPropGetter={(event) => ({
+                    style: {
+                        backgroundColor: event.color || '#2b7fff',
+                        color: 'white',
+                        borderRadius: '5px',
+                        border: 'none',
+                        display: 'block',
+                    }
+                })}
                 style={{ height: '100%', color: "#333" }}
                 messages={{
                     next: 'Próximo',
