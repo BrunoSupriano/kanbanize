@@ -35,7 +35,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     if (res.ok) {
       localStorage.setItem('usuario', JSON.stringify(data));
-      router.push('/home');
+      router.push('/kanban');
     } else {
       setErro(data.erro || 'Email ou senha incorretos.');
     }
