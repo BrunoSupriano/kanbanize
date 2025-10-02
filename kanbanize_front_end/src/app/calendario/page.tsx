@@ -10,12 +10,6 @@ import moment from 'moment'
 import _ from 'lodash'
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import './rbc_css.css'
-
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
-
-const DnDCalendar = withDragAndDrop(Calendar)
 
 const localizer = dateFnsLocalizer({
     format,
@@ -26,21 +20,22 @@ const localizer = dateFnsLocalizer({
 })
 
 export default function Calendario() {
+
     const [tasks, setTasks] = useState<any>([])
     const [modal, setModal] = useState({ toggle: false, content: {} })
 
     const getTasksContent = useCallback(async () => {
         const tasks: any = await getTasks({})
-    setTasks(_.map(tasks.content, (data) => ({
-    id: data.id,
-    title: data.titulo,
-    description: data.descricao,
-    status: data.situacao,
-    priority: data.prioridade,
-    allDay: true, // <--- chave para forçar RBC a renderizar no topo
-    start: moment(data.data_vencimento).startOf('day').toDate(),
-    end: moment(data.data_vencimento).endOf('day').toDate(),
-    })))
+        setTasks(_.map(tasks.content, (data) => ({
+            id: data.id,
+            title: data.titulo,
+            description: data.descricao,
+            status: data.situacao,
+            priority: data.prioridade,
+            date: moment(data.data_vencimento).utc().format("YYYY-MM-DD"),
+            start: moment(data.data_vencimento).toDate(),
+            end: moment(data.data_vencimento).toDate(),
+        })))
     }, [])
 
     useEffect(() => {
@@ -66,6 +61,7 @@ export default function Calendario() {
                 idUser: 1,
             })
         }
+
         await getTasksContent()
     }
 
@@ -76,56 +72,44 @@ export default function Calendario() {
     const handleSelectEvent = (event: any) => {
         setModal({ toggle: true, content: event })
     }
-
+    
     return (
-        <div style={{ height: '88vh', padding: '5px', background: "#fff" }}>
-            {!!modal.toggle &&
+        <div 
+            style={{ 
+                height: '100vh', 
+                padding: '20px', 
+                background: "#fff" 
+            }}
+        >
+            {!!modal.toggle && 
                 <TaskModal
                     task={modal.content}
                     onClose={() => setModal({ toggle: false, content: {} })}
                     onSave={async (task) => {
-                        await saveTask(task)
-                        setModal({ toggle: false, content: {} })
-                    }}
-                />
-            }
-
-            <DnDCalendar
+                        await saveTask(task);
+                        setModal({ toggle: false, content: {} });
+                }}
+            />}
+            <Calendar
                 selectable
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
                 localizer={localizer}
                 events={tasks}
                 startAccessor="start"
                 endAccessor="end"
                 culture="pt-BR"
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-                onEventDrop={({ event, start, end }) => {
-                    saveTask({
-                        ...event,
-                        start,
-                        end,
-                        date: moment(start).utc().format("YYYY-MM-DD")
-                    })
+                eventPropGetter={(event) => {
+                    return {
+                        style: {
+                            backgroundColor: event.color || '#2b7fff',
+                            color: 'white',
+                            borderRadius: '5px',
+                            border: 'none',
+                            display: 'block',
+                        },
+                    };
                 }}
-                onEventResize={({ event, start, end }) => {
-                    saveTask({
-                        ...event,
-                        start,
-                        end,
-                        date: moment(start).utc().format("YYYY-MM-DD")
-                    })
-                }}
-                resizable
-                draggableAccessor={() => true}
-                eventPropGetter={(event) => ({
-                    style: {
-                        backgroundColor: event.color || '#2b7fff',
-                        color: 'white',
-                        borderRadius: '5px',
-                        border: 'none',
-                        display: 'block',
-                    }
-                })}
                 style={{ height: '100%', color: "#333" }}
                 messages={{
                     next: 'Próximo',
