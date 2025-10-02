@@ -86,12 +86,12 @@
 }
 
 .rbc-button-link{
-    font-size: 16px; /* Ajuste o tamanho da fonte */
+    font-size: 12px; /* Ajuste o tamanho da fonte */
     font-weight: bold; /* Deixa o número mais destacado */
-    color: #fff; /* Cor do número */
+    color: #0048ff; /* Cor do número */
     padding: 5px;
     margin: 10px;
-    background-color: #ffffff;
+    background-color: #0048ff15;
     border-radius: 10px;
     top: 5px;
     left: 5px;
@@ -106,6 +106,7 @@
 
 /* Linhas horizontais */
 .rbc-month-row + .rbc-month-row {
+    min-height: 1px;
     border: none;
 }
 
@@ -129,12 +130,15 @@
 /* Linhas verticais */
 .rbc-day-bg + .rbc-day-bg {
     border-radius: 15px;
-    border: solid 1px #dce2e9;;
+    border: solid 1px #dce2e9;
 }
+
+
+
 
 /* Marcação dia atual */
 .rbc-today {
-    background-color: #dce2e9;
+    background-color: hsl(212, 23%, 89%);
     border-radius: 15px;
 }
 
@@ -146,6 +150,7 @@
     padding: 1px;
     border-radius: 8px;
     transition: transform 0.2s ease;
+    overflow: hidden;
 }
 
 .rbc-event:hover {
@@ -203,12 +208,22 @@
 
 /* Modifica o elemento de dia atual */
 .rbc-time-view .rbc-header + .rbc-today{
+    background-color: blue;
+    padding: 1px;
+    border-radius: 15px;
+    box-shadow: none; /* Remove qualquer sombra */;
+    margin: 1px;
+}
+
+.rbc-header .rbc-today {
     background-color: #dce2e96e;
+    color: #fff;
     padding: 1px;
     border-radius: 15px;
     box-shadow: none; /* Remove qualquer sombra */;
     margin: 1px;    
 }
+
 
 .rbc-time-view .rbc-today {
     border-radius: 0px;
@@ -218,6 +233,13 @@
     color: #fff;
     border-radius: 0px;
     background-color: transparent;
+    border: none;
+}
+
+.rbc-time-view .rbc-button-link .rbc-today{
+    color: red;
+    border-radius: 0px;
+    background-color: red;
     border: none;
 }
 
@@ -278,6 +300,7 @@
 /* Estiliza os cabeçalhos da tabela da aba de eventos */
 .rbc-agenda-table .rbc-header {
     background-color: #f8f9fa; /* Fundo cinza claro */
+    color: #dce2e9;
     border-radius: 0px;
 }
 
@@ -313,13 +336,34 @@
 }
 
 .rbc-event-content {
-    font-size: 14px; /* Tamanho da fonte */
+    font-size: 12px; /* Tamanho da fonte */
     font-weight: bold; /* Negrito para destaque */
     color: #fff; /* Cor do texto */
-    padding: 5px; /* Espaçamento interno */
+    padding-left: 5px;
     white-space: nowrap; /* Evita quebra de linha */
     overflow: hidden; /* Esconde o excesso de texto */
     text-overflow: ellipsis; /* Adiciona reticências (...) se o texto for muito longo */
     background-color: #155dfc; /* Cor de fundo */
-    border-radius: 8px; /* Bordas arredondadas */
+
+}
+
+.rbc-show-more {
+    background-color: #155dfc;
+    align-content: center;
+    align-items:center;
+    color: #fff;
+    border-radius: 10px;
+    padding: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 2px;
+    transition: background-color 0.3s ease;
+
+}
+
+.rbc-row-segment {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    display: flex;
 }

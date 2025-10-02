@@ -31,16 +31,16 @@ export default function Calendario() {
 
     const getTasksContent = useCallback(async () => {
         const tasks: any = await getTasks({})
-        setTasks(_.map(tasks.content, (data) => ({
-            id: data.id,
-            title: data.titulo,
-            description: data.descricao,
-            status: data.situacao,
-            priority: data.prioridade,
-            date: moment(data.data_vencimento).utc().format("YYYY-MM-DD"),
-            start: moment(data.data_vencimento).toDate(),
-            end: moment(data.data_vencimento).toDate(),
-        })))
+    setTasks(_.map(tasks.content, (data) => ({
+    id: data.id,
+    title: data.titulo,
+    description: data.descricao,
+    status: data.situacao,
+    priority: data.prioridade,
+    allDay: true, // <--- chave para forçar RBC a renderizar no topo
+    start: moment(data.data_vencimento).startOf('day').toDate(),
+    end: moment(data.data_vencimento).endOf('day').toDate(),
+    })))
     }, [])
 
     useEffect(() => {
