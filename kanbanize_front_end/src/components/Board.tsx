@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Column } from "./Column";
 import TaskModal from "./TaskModal";
+import { XMarkIcon } from '@heroicons/react/24/outline'; // Ícone para fechar
 
 export interface Task {
   id?: string;
@@ -13,7 +14,7 @@ export interface Task {
   priority?: "baixa" | "média" | "alta" | "urgente";
 }
 
-export const Board: React.FC = () => {
+export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; }> = ({ isFormVisible, onCloseForm }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [form, setForm] = useState({
     title: "",
@@ -22,7 +23,6 @@ export const Board: React.FC = () => {
     status: "todo",
     priority: "baixa" as Task["priority"],
   });
-  const [isFormVisible, setFormVisible] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [modalTask, setModalTask] = useState<Task | null>(null);
 
@@ -43,7 +43,7 @@ export const Board: React.FC = () => {
       }));
 
       setTasks(parsedTasks);
-    } catch (err) {
+    } catch (err) { // CORREÇÃO APLICADA AQUI
       console.error("Erro ao carregar tarefas:", err);
     }
   };
@@ -88,8 +88,8 @@ export const Board: React.FC = () => {
     }
 
     setForm({ title: "", description: "", date: "", status: "todo", priority: "baixa" });
-    setFormVisible(false);
     setEditingTaskId(null);
+    onCloseForm();
   };
 
   const handleDrop = async (taskId: string, newStatus: string) => {
@@ -155,18 +155,13 @@ export const Board: React.FC = () => {
 
       if (res.ok) {
         await fetchTasks();
-        setModalTask(null); // Fecha o modal
+        setModalTask(null);
       } else {
         console.error("Erro ao editar tarefa:", await res.text());
       }
     } catch (err) {
       console.error("Erro de rede ao editar tarefa:", err);
     }
-  };
-
-  const handleToggleForm = () => {
-    setFormVisible(!isFormVisible);
-    setEditingTaskId(null);
   };
 
   const handleEditTask = (taskId: string) => {
@@ -178,16 +173,14 @@ export const Board: React.FC = () => {
 
   return (
     <>
-      <button
-        onClick={handleToggleForm}
-        className="fixed top-4 right-4 z-[9999] bg-blue-600 text-white p-3 rounded-full shadow-lg"
-      >
-        {editingTaskId ? "Editar Tarefa" : isFormVisible ? "Fechar" : "Adicionar Tarefa"}
-      </button>
-
       {isFormVisible && (
-        <form onSubmit={handleSubmit} className="absolute top-20 right-4 bg-white p-6 shadow-md rounded-lg w-80 z-50">
-          <h2 className="text-xl font-semibold mb-4">Nova Tarefa</h2>
+        <form onSubmit={handleSubmit} className="absolute top-20 right-4 bg-white p-6 shadow-xl rounded-lg w-80 z-50 border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">Nova Tarefa</h2>
+            <button type="button" onClick={onCloseForm} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
           <input
             type="text"
             name="title"
@@ -235,9 +228,9 @@ export const Board: React.FC = () => {
           </select>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded"
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition-colors"
           >
-            {editingTaskId ? "Salvar Alterações" : "Adicionar"}
+            {editingTaskId ? "Salvar Alterações" : "Adicionar Tarefa"}
           </button>
         </form>
       )}
