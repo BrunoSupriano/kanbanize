@@ -29,23 +29,22 @@ export default function Header({ onAddTaskClick }: { onAddTaskClick?: () => void
         }}
       >
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 lg:px-10">
-
-          <div
-            onClick={() => router.push('/home')}
-            className="flex items-center gap-3 cursor-pointer select-none"
-          >
+ 
+          <div className="flex lg:flex-1">
             <div
-              className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg"
-              style={{
-                background: gradient,
-                boxShadow: '0 4px 12px rgba(21,93,252,0.4)',
-              }}
+              onClick={() => router.push('/home')}
+              className="flex items-center gap-3 cursor-pointer select-none"
             >
-              K
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg"
+                style={{ background: gradient, boxShadow: '0 4px 12px rgba(21,93,252,0.4)' }}
+              >
+                K
+              </div>
+              <span className="text-lg font-semibold tracking-tight text-white drop-shadow-sm">
+                Kanbanize
+              </span>
             </div>
-            <span className="text-lg font-semibold tracking-tight text-white drop-shadow-sm">
-              Kanbanize
-            </span>
           </div>
 
           <div className="flex lg:hidden">
@@ -58,7 +57,7 @@ export default function Header({ onAddTaskClick }: { onAddTaskClick?: () => void
             </button>
           </div>
 
-          <div className="hidden lg:flex lg:items-center lg:gap-x-6">
+          <div className="hidden lg:flex lg:gap-x-6">
             {navItems.map((item) => (
               <div
                 key={item.name}
@@ -72,20 +71,21 @@ export default function Header({ onAddTaskClick }: { onAddTaskClick?: () => void
                 {item.name}
               </div>
             ))}
-
             {pathname === '/kanban' && (
               <div
                 onClick={onAddTaskClick}
-                className="ml-4 flex cursor-pointer items-center gap-2 rounded-xl bg-green-500/20 px-5 py-2 text-base font-semibold font-sans text-green-600 hover:bg-green-500/30 hover:text-white transition-all"
+                className="flex cursor-pointer items-center gap-2 rounded-xl bg-green-500/20 px-5 py-2 text-base font-semibold font-sans text-green-600 hover:bg-green-500/30 hover:text-white transition-all"
               >
                 <PlusIcon className="h-5 w-5" />
                 Adicionar Tarefa
               </div>
             )}
+          </div>
 
+             <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <div
               onClick={() => router.push('/login')}
-              className="ml-4 flex cursor-pointer items-center gap-2 rounded-xl bg-red-500/20 px-5 py-2 text-base font-semibold font-sans text-red-600 hover:bg-red-500/30 hover:text-white transition-all"
+              className="flex cursor-pointer items-center gap-2 rounded-xl bg-red-500/20 px-5 py-2 text-base font-semibold font-sans text-red-600 hover:bg-red-500/30 hover:text-white transition-all"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5" />
               Sair
