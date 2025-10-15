@@ -180,7 +180,7 @@ export const Board: React.FC = () => {
     <>
       <button
         onClick={handleToggleForm}
-        className="fixed top-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg"
+        className="fixed top-4 right-4 z-[9999] bg-blue-600 text-white p-3 rounded-full shadow-lg"
       >
         {editingTaskId ? "Editar Tarefa" : isFormVisible ? "Fechar" : "Adicionar Tarefa"}
       </button>
