@@ -8,6 +8,7 @@ import { getTasks, crateTask, updateTask } from '@/api/task'
 import TaskModal from '@/components/TaskModal'
 import moment from 'moment'
 import _ from 'lodash'
+import Header from "@/components/Header";  
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './rbc_css.css'
@@ -32,7 +33,6 @@ export default function Calendario() {
         []
     )
 
-    // Carregar DnDCalendar apenas no cliente - ISSO RESOLVE O PROBLEMA
     useEffect(() => {
         let mounted = true
         
@@ -169,9 +169,10 @@ export default function Calendario() {
             position: 'relative', 
             zIndex: 1,
         }}>
+            <Header />
+            
             {!!modal.toggle && (
                 <>
-                    {/* Backdrop */}
                     <div 
                         style={{ 
                             position: 'fixed', 
