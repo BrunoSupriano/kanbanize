@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
+interface ChatBotPopupProps {
+  isOpen: boolean;
+  onToggle: () => void;
+}
 
 const respostasFake = [
   "Interessante! Me conte mais sobre isso 🤔",
@@ -24,15 +29,14 @@ function gerarResposta(texto: string): string {
   return respostasFake[Math.floor(Math.random() * respostasFake.length)];
 }
 
-const ChatBotPopup: React.FC = () => {
-  const [open, setOpen] = useState(false);
+const ChatBotPopup: React.FC<ChatBotPopupProps> = ({ isOpen, onToggle }) => {
+  
   const [messages, setMessages] = useState([
     { from: "bot", text: "Olá! 👋 Sou seu assistente virtual. Como posso ajudar?" },
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
 
-  // Refs
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const botSound = useRef<HTMLAudioElement | null>(null);
@@ -43,17 +47,15 @@ const ChatBotPopup: React.FC = () => {
 
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    if (inputRef.current) inputRef.current.focus();
-  }, [messages, typing]);
+    if (isOpen && inputRef.current) inputRef.current.focus();
+  }, [messages, typing, isOpen]);
 
   const simulateBotResponse = (userText: string) => {
     setTyping(true);
-
     setTimeout(() => {
       const resposta = gerarResposta(userText);
       setMessages((prev) => [...prev, { from: "bot", text: resposta }]);
       setTyping(false);
-
       if (botSound.current) {
         botSound.current.currentTime = 0;
         botSound.current.play().catch(() => {});
@@ -63,7 +65,6 @@ const ChatBotPopup: React.FC = () => {
 
   const handleSend = () => {
     if (!input.trim() || typing) return;
-
     setMessages((prev) => [...prev, { from: "user", text: input }]);
     simulateBotResponse(input);
     setInput("");
@@ -71,21 +72,20 @@ const ChatBotPopup: React.FC = () => {
 
   return (
     <>
-      {open && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-[#1C2B40] border border-[#2E3C4F] rounded-2xl shadow-xl p-3 flex flex-col z-50">
-          {/* Header */}
+    
+      {isOpen && (
+        <div className="fixed bottom-24 right-4 w-80 h-96 bg-[#1C2B40] border border-[#2E3C4F] rounded-2xl shadow-xl p-3 flex flex-col z-50">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-[#F1F5F9] font-semibold">Assistente Virtual</h2>
             <button
-              onClick={() => setOpen(false)}
+              onClick={onToggle} 
               className="text-[#94A3B8] hover:text-white transition"
             >
               ✕
             </button>
           </div>
 
-          {/* Mensagens */}
-          <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+          <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-2">
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -98,8 +98,6 @@ const ChatBotPopup: React.FC = () => {
                 {msg.text}
               </div>
             ))}
-
-            {/* Animação de digitação */}
             {typing && (
               <div className="flex items-center gap-1 text-[#94A3B8] mt-2">
                 <div className="w-2 h-2 bg-[#94A3B8] rounded-full animate-bounce"></div>
@@ -108,12 +106,9 @@ const ChatBotPopup: React.FC = () => {
                 <span className="text-xs ml-2 italic">Digitando...</span>
               </div>
             )}
-
-            {/* Âncora de rolagem */}
             <div ref={chatEndRef}></div>
           </div>
 
-          {/* Campo de entrada */}
           <div className="flex">
             <input
               ref={inputRef}
@@ -141,10 +136,9 @@ const ChatBotPopup: React.FC = () => {
         </div>
       )}
 
-      {/* Botão flutuante */}
       <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-[#00C49A] text-white text-2xl shadow-lg hover:scale-105 transition"
+        onClick={onToggle}
+        className="w-14 h-14 rounded-full bg-[#00C49A] text-white text-2xl shadow-lg hover:scale-105 transition"
         title="Abrir ChatBot"
       >
         💬
