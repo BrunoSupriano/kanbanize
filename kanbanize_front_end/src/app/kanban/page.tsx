@@ -1,20 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { Board } from "../../components/Board";
 import ChatBotPopup from "../../components/ChatBotPopup";
 import NotificationModal from "@/components/NotificationModal";
+import Header from "@/components/Header"; 
 
 export default function KanbanPage() {
+  const [isFormVisible, setFormVisible] = useState(false);
+
+  const handleToggleForm = () => {
+    setFormVisible(prev => !prev);
+  };
+
   return (
-    <div className="p-4 relative">
-      {/* Painel principal do Kanban */}
-      <Board />
+    <> 
+      <Header onAddTaskClick={handleToggleForm} />
 
-      {/* Chatbot flutuante */}
-      <ChatBotPopup />
+      <div className="p-4 relative">
+        <Board 
+          isFormVisible={isFormVisible} 
+          onCloseForm={handleToggleForm}
+        />
 
-      {/* Notificações */}
-      <NotificationModal />
-    </div>
+        <ChatBotPopup />
+        <NotificationModal />
+      </div>
+    </>
   );
 }
