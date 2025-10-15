@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { usePathname, useRouter } from 'next/navigation'
 import _ from 'lodash'
 
-
-export default function Header() {
+export default function Header({ onAddTaskClick }: { onAddTaskClick?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -30,7 +29,7 @@ export default function Header() {
         }}
       >
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 lg:px-10">
-          {/* LOGO */}
+
           <div
             onClick={() => router.push('/home')}
             className="flex items-center gap-3 cursor-pointer select-none"
@@ -49,7 +48,6 @@ export default function Header() {
             </span>
           </div>
 
-          {/* MOBILE BUTTON */}
           <div className="flex lg:hidden">
             <button
               type="button"
@@ -60,23 +58,31 @@ export default function Header() {
             </button>
           </div>
 
-          {/* DESKTOP MENU */}
-            <div className="hidden lg:flex lg:items-center lg:gap-x-6">
+          <div className="hidden lg:flex lg:items-center lg:gap-x-6">
             {navItems.map((item) => (
               <div
-              key={item.name}
-              onClick={() => router.push(item.path)}
-              className={`cursor-pointer rounded-xl px-5 py-2 text-base font-semibold font-sans transition-all duration-200 ${
-                pathname === item.path
-                ? 'bg-white/20 text-[#155dfc] shadow-md'
-                : 'text-black hover:bg-white/15 hover:text-white'
-              }`}
+                key={item.name}
+                onClick={() => router.push(item.path)}
+                className={`cursor-pointer rounded-xl px-5 py-2 text-base font-semibold font-sans transition-all duration-200 ${
+                  pathname === item.path
+                    ? 'bg-white/20 text-[#155dfc] shadow-md'
+                    : 'text-black hover:bg-white/15 hover:text-white'
+                }`}
               >
-              {item.name}
+                {item.name}
               </div>
             ))}
 
-            {/* LOGOUT */}
+            {pathname === '/kanban' && (
+              <div
+                onClick={onAddTaskClick}
+                className="ml-4 flex cursor-pointer items-center gap-2 rounded-xl bg-green-500/20 px-5 py-2 text-base font-semibold font-sans text-green-600 hover:bg-green-500/30 hover:text-white transition-all"
+              >
+                <PlusIcon className="h-5 w-5" />
+                Adicionar Tarefa
+              </div>
+            )}
+
             <div
               onClick={() => router.push('/login')}
               className="ml-4 flex cursor-pointer items-center gap-2 rounded-xl bg-red-500/20 px-5 py-2 text-base font-semibold font-sans text-red-600 hover:bg-red-500/30 hover:text-white transition-all"
@@ -87,7 +93,6 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* MOBILE MENU */}
         <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
           <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
           <DialogPanel
@@ -133,6 +138,19 @@ export default function Header() {
                   {item.name}
                 </div>
               ))}
+
+              {pathname === '/kanban' && (
+                <div
+                  onClick={() => {
+                    if (onAddTaskClick) onAddTaskClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 rounded-xl px-4 py-2 text-base font-semibold font-sans text-green-600 bg-green-500/20 hover:bg-green-500/30 hover:text-white transition-all"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Adicionar Tarefa
+                </div>
+              )}
 
               <div
                 onClick={() => {
