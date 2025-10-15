@@ -247,7 +247,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="A Fazer"
           status="todo"
-          color="bg-orange-100"
+          color="bg-blue-100"
           tasks={tasks.filter((task) => task.status === "todo")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}
@@ -256,7 +256,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="Em Progresso"
           status="in-progress"
-          color="bg-yellow-100"
+          color="bg-blue-100"
           tasks={tasks.filter((task) => task.status === "in-progress")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}
@@ -265,7 +265,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="Concluído"
           status="done"
-          color="bg-green-100"
+          color="bg-blue-100"
           tasks={tasks.filter((task) => task.status === "done")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}
