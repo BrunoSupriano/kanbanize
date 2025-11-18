@@ -2,7 +2,6 @@
 
 /* Header e Botoes do Calendário */
 
-
 .rbc-toolbar {
     background-color: #fff;
     padding: 10px;
@@ -10,10 +9,7 @@
     border-bottom: 2px solid #155dfc;
     font-size: 20px;
     font-weight: bold;
-    position: relative;
-    z-index: 100 !important; /* ALTERADO DE 10 PARA 100 */
-    pointer-events: auto !important;
-    isolation: isolate; /* ADICIONAR - cria contexto próprio */
+
 }
 
 
@@ -24,12 +20,6 @@
 
 /* Botões */
 
-/* Garantir que botões sejam sempre clicáveis */
-.rbc-btn-group {
-    position: relative;
-    z-index: 102 !important; /* ADICIONAR */
-}
-
 /* Estiliza os botões dentro do grupo de botões */
 .rbc-btn-group > button {
     border: 1px solid #155dfc !important;
@@ -38,22 +28,15 @@
     padding: 10px 15px;
     border-radius: 8px;
     transition: background-color 0.3s ease, color 0.3s ease;
-    pointer-events: auto !important; /* ADICIONAR !important */
-    cursor: pointer !important; /* ADICIONAR !important */
-    position: relative; /* ADICIONAR */
 }
-/* Estilo do botão normal */
 
+/* Estilo do botão normal */
 .rbc-toolbar button {
     color: #155dfc;
     padding: 10px 15px;
     border-radius: 8px;
     transition: background-color 0.3s ease;
-    pointer-events: auto !important; /* ADICIONAR !important */
-    position: relative; /* ADICIONAR */
-    z-index: 101 !important; /* ADICIONAR - garante que está acima */
 }
-
 
 /* Efeito de hover (quando passa o mouse sobre o botão) */
 .rbc-toolbar button:hover {
@@ -159,13 +142,6 @@
     border-radius: 15px;
 }
 
-/* Container do calendário */
-.rbc-calendar {
-    position: relative;
-    z-index: 1;
-    isolation: isolate; /* ADICIONAR */
-}
-
 
 /* Eventos */
 .rbc-event {
@@ -175,8 +151,6 @@
     border-radius: 8px;
     transition: transform 0.2s ease;
     overflow: hidden;
-    pointer-events: auto;
-    cursor: pointer;
 }
 
 .rbc-event:hover {

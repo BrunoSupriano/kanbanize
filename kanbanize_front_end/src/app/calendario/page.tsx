@@ -12,10 +12,21 @@ import Header from "@/components/Header";
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './rbc_css.css'
+
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 
+const DnDCalendar = withDragAndDrop(Calendar)
+
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
+    getDay,
+    locales: { 'pt-BR': ptBR },
+})
+
 export default function Calendario() {
-    const [DnDCalendar, setDnDCalendar] = useState<any>(null)
     const [tasks, setTasks] = useState<any>([])
     const [modal, setModal] = useState({ toggle: false, content: {} })
     const [view, setView] = useState('month')
@@ -53,54 +64,25 @@ export default function Calendario() {
     }, [])
 
     const getTasksContent = useCallback(async () => {
-        try {
-            const tasks: any = await getTasks({})
-            setTasks(_.map(tasks.content, (data) => ({
-                id: data.id,
-                title: data.titulo,
-                description: data.descricao,
-                status: data.situacao,
-                priority: data.prioridade,
-                allDay: true,
-                start: moment(data.data_vencimento).startOf('day').toDate(),
-                end: moment(data.data_vencimento).endOf('day').toDate(),
-            })))
-        } catch (error) {
-            console.error('Erro ao carregar tarefas:', error)
-        }
+        const tasks: any = await getTasks({})
+    setTasks(_.map(tasks.content, (data) => ({
+    id: data.id,
+    title: data.titulo,
+    description: data.descricao,
+    status: data.situacao,
+    priority: data.prioridade,
+    allDay: true, // <--- chave para forçar RBC a renderizar no topo
+    start: moment(data.data_vencimento).startOf('day').toDate(),
+    end: moment(data.data_vencimento).endOf('day').toDate(),
+    })))
     }, [])
 
     useEffect(() => {
         if (DnDCalendar) {
             getTasksContent()
         }
-    }, [DnDCalendar, getTasksContent])
-
-    const saveTask = useCallback(async (data: any) => {
-        try {
-            if (data.id) {
-                await updateTask(data.id, {
-                    title: data.title,
-                    description: data.description,
-                    date: data.date,
-                    status: data.status,
-                    priority: data.priority,
-                })
-            } else {
-                await crateTask({
-                    title: data.title,
-                    description: data.description,
-                    date: data.date,
-                    status: data.status,
-                    priority: data.priority,
-                    idUser: 1,
-                })
-            }
-            await getTasksContent()
-        } catch (error) {
-            console.error('Erro ao salvar tarefa:', error)
-        }
-    }, [getTasksContent])
+        await getTasksContent()
+    }
 
     const handleSelectSlot = useCallback(({ start }: any) => {
         setModal({ toggle: true, content: { date: moment(start).utc().format("YYYY-MM-DD") } })
@@ -162,49 +144,17 @@ export default function Calendario() {
     }
 
     return (
-        <div style={{ 
-            height: '88vh', 
-            padding: '5px', 
-            background: "#fff", 
-            position: 'relative', 
-            zIndex: 1,
-        }}>
-            <Header />
-            
-            {!!modal.toggle && (
-                <>
-                    <div 
-                        style={{ 
-                            position: 'fixed', 
-                            inset: 0, 
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-                            zIndex: 9998,
-                            backdropFilter: 'blur(4px)'
-                        }}
-                        onClick={() => setModal({ toggle: false, content: {} })}
-                    />
-                    {/* Modal */}
-                    <div style={{ 
-                        position: 'fixed', 
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 9999,
-                        width: '100%',
-                        maxWidth: '600px',
-                        padding: '0 20px'
-                    }}>
-                        <TaskModal
-                            task={modal.content}
-                            onClose={() => setModal({ toggle: false, content: {} })}
-                            onSave={async (task) => {
-                                await saveTask(task)
-                                setModal({ toggle: false, content: {} })
-                            }}
-                        />
-                    </div>
-                </>
-            )}
+        <div style={{ height: '88vh', padding: '5px', background: "#fff" }}>
+            {!!modal.toggle &&
+                <TaskModal
+                    task={modal.content}
+                    onClose={() => setModal({ toggle: false, content: {} })}
+                    onSave={async (task) => {
+                        await saveTask(task)
+                        setModal({ toggle: false, content: {} })
+                    }}
+                />
+            }
 
             <DnDCalendar
                 selectable
@@ -213,17 +163,27 @@ export default function Calendario() {
                 startAccessor="start"
                 endAccessor="end"
                 culture="pt-BR"
-                view={view}
-                date={date}
-                onView={(newView: string) => setView(newView)}
-                onNavigate={(newDate: Date) => setDate(new Date(newDate))}
                 onSelectEvent={handleSelectEvent}
                 onSelectSlot={handleSelectSlot}
-                onEventDrop={handleEventDrop}
-                onEventResize={handleEventResize}
+                onEventDrop={({ event, start, end }) => {
+                    saveTask({
+                        ...event,
+                        start,
+                        end,
+                        date: moment(start).utc().format("YYYY-MM-DD")
+                    })
+                }}
+                onEventResize={({ event, start, end }) => {
+                    saveTask({
+                        ...event,
+                        start,
+                        end,
+                        date: moment(start).utc().format("YYYY-MM-DD")
+                    })
+                }}
                 resizable
                 draggableAccessor={() => true}
-                eventPropGetter={(event: any) => ({
+                eventPropGetter={(event) => ({
                     style: {
                         backgroundColor: event.color || '#2b7fff',
                         color: 'white',
