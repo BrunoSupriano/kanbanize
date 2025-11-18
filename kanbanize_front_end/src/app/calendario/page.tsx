@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -8,6 +8,7 @@ import { getTasks, crateTask, updateTask } from '@/api/task'
 import TaskModal from '@/components/TaskModal'
 import moment from 'moment'
 import _ from 'lodash'
+import Header from "@/components/Header";  
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './rbc_css.css'
@@ -28,6 +29,39 @@ const localizer = dateFnsLocalizer({
 export default function Calendario() {
     const [tasks, setTasks] = useState<any>([])
     const [modal, setModal] = useState({ toggle: false, content: {} })
+    const [view, setView] = useState('month')
+    const [date, setDate] = useState(new Date())
+    
+    const localizer = useMemo(
+        () =>
+            dateFnsLocalizer({
+                format,
+                parse,
+                startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
+                getDay,
+                locales: { 'pt-BR': ptBR },
+            }),
+        []
+    )
+
+    useEffect(() => {
+        let mounted = true
+        
+        Promise.all([
+            import('react-big-calendar/lib/addons/dragAndDrop'),
+            import('react-big-calendar')
+        ]).then(([dragDropMod, rbcMod]) => {
+            if (mounted) {
+                const withDragAndDrop = dragDropMod.default
+                const DnD = withDragAndDrop(rbcMod.Calendar)
+                setDnDCalendar(() => DnD)
+            }
+        })
+        
+        return () => {
+            mounted = false
+        }
+    }, [])
 
     const getTasksContent = useCallback(async () => {
         const tasks: any = await getTasks({})
@@ -44,37 +78,69 @@ export default function Calendario() {
     }, [])
 
     useEffect(() => {
-        getTasksContent()
-    }, [getTasksContent])
-
-    const saveTask = async (data: any) => {
-        if (data.id) {
-            await updateTask(data.id, {
-                title: data.title,
-                description: data.description,
-                date: data.date,
-                status: data.status,
-                priority: data.priority,
-            })
-        } else {
-            await crateTask({
-                title: data.title,
-                description: data.description,
-                date: data.date,
-                status: data.status,
-                priority: data.priority,
-                idUser: 1,
-            })
+        if (DnDCalendar) {
+            getTasksContent()
         }
         await getTasksContent()
     }
 
-    const handleSelectSlot = ({ start }: any) => {
+    const handleSelectSlot = useCallback(({ start }: any) => {
         setModal({ toggle: true, content: { date: moment(start).utc().format("YYYY-MM-DD") } })
-    }
+    }, [])
 
-    const handleSelectEvent = (event: any) => {
+    const handleSelectEvent = useCallback((event: any) => {
         setModal({ toggle: true, content: event })
+    }, [])
+
+    const handleEventDrop = useCallback(({ event, start, end }: any) => {
+        saveTask({
+            ...event,
+            start,
+            end,
+            date: moment(start).utc().format("YYYY-MM-DD")
+        })
+    }, [saveTask])
+
+    const handleEventResize = useCallback(({ event, start, end }: any) => {
+        saveTask({
+            ...event,
+            start,
+            end,
+            date: moment(start).utc().format("YYYY-MM-DD")
+        })
+    }, [saveTask])
+
+    // Loading state enquanto o calendário não está pronto
+    if (!DnDCalendar) {
+        return (
+            <div style={{ 
+                height: '88vh', 
+                padding: '5px', 
+                background: "#fff", 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        border: '4px solid #f3f3f3',
+                        borderTop: '4px solid #155dfc',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 16px'
+                    }} />
+                    <p style={{ color: '#333', fontSize: '16px' }}>Carregando calendário...</p>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            </div>
+        )
     }
 
     return (
