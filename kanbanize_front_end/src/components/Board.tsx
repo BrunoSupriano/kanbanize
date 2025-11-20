@@ -56,15 +56,21 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
     setForm({ ...form, [name]: value });
   };
 
+  const mapToBackendStatus = {
+  "todo": "pendente",
+  "in-progress": "andamento",
+  "done": "concluido",
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const taskData = {
-      title: form.title,
-      description: form.description || "-",
-      date: form.date,
-      priority: form.priority,
-      status: form.status,
-      idUser: 1,
+      titulo: form.title,
+      descricao: form.description || "-",
+      situacao: form.status,
+      prioridade: form.priority,
+      data_vencimento: form.date
     };
     try {
       const res = await fetch("http://localhost:3001/task", {
@@ -132,11 +138,12 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
 
   const handleSaveTask = async (updatedTask: Task) => {
     const updateData = {
-      title: updatedTask.title,
-      description: updatedTask.description || "-",
-      date: updatedTask.date,
-      priority: updatedTask.priority,
-      status: updatedTask.status,
+      titulo: updatedTask.title,
+      descricao: updatedTask.description || "-",
+      data_vencimento: updatedTask.date,
+      prioridade: updatedTask.priority,
+      situacao: mapToBackendStatus[updatedTask.status]
+
     };
 
     try {

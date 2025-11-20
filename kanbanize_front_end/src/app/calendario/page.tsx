@@ -6,6 +6,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getTasks, crateTask, updateTask } from '@/api/task'
 import TaskModal from '@/components/TaskModal'
+import Header from '@/components/Header'
 import moment from 'moment'
 import _ from 'lodash'
 
@@ -58,6 +59,7 @@ export default function Calendario() {
             description: data.descricao,
             status: data.situacao,
             priority: data.prioridade,
+            date: data.data_vencimento,
             allDay: true,
             start: moment(data.data_vencimento).startOf('day').toDate(),
             end: moment(data.data_vencimento).endOf('day').toDate(),
@@ -80,45 +82,74 @@ export default function Calendario() {
         setModal({ toggle: true, content: event })
     }, [])
 
-    const saveTask = useCallback(async (task: any) => {
-        if (task.id) {
-            await updateTask(task.id, {
-                titulo: task.title,
-                descricao: task.description,
-                situacao: task.status,
-                prioridade: task.priority,
-                data_vencimento: task.date
-            })
-        } else {
-            await crateTask({
-                titulo: task.title,
-                descricao: task.description,
-                situacao: task.status,
-                prioridade: task.priority,
-                data_vencimento: task.date
-            })
-        }
+    const normalizePriority = (p: string) => 
+    p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        await getTasksContent()
+
+    const saveTask = useCallback(async (task: any) => {
+        try {
+
+            const mapStatus = {
+            "todo": "pendente",
+            "in-progress": "andamento",
+            "done": "concluido"
+            }
+
+            const payload: any = {
+            title: task.title,
+            description: task.description || "-",
+            date: moment(task.date).toISOString(),
+            status: mapStatus[task.status] || "pendente",
+            priority: normalizePriority(task.priority || "media")
+            };
+
+            if (task.idColumn) payload.idColumn = task.idColumn;
+            if (task.idUser) payload.idUser = task.idUser;
+            
+            console.log('Salvando tarefa:', payload)
+            
+            if (task.id) {
+                await updateTask(task.id, payload)
+            } else {
+                await crateTask(payload)
+            }
+
+            await getTasksContent()
+        } catch (error) {
+            console.error('Erro ao salvar tarefa:', error)
+            throw error
+        }
     }, [getTasksContent])
 
-    const handleEventDrop = useCallback(({ event, start, end }: any) => {
-        saveTask({
-            ...event,
-            start,
-            end,
-            date: moment(start).utc().format("YYYY-MM-DD")
-        })
+    const handleEventDrop = useCallback(({ event, start }: any) => {
+        const taskData = {
+            id: event.id,
+            title: event.title || 'Sem título',
+            description: event.description || '',
+            status: event.status || 'pendente',
+            priority: event.priority || 'media',
+            date: moment(start).format("YYYY-MM-DD")
+        }
+        console.log('Arrastando tarefa:', taskData)
+        saveTask(taskData)
     }, [saveTask])
 
-    const handleEventResize = useCallback(({ event, start, end }: any) => {
-        saveTask({
-            ...event,
-            start,
-            end,
-            date: moment(start).utc().format("YYYY-MM-DD")
-        })
+    const handleEventResize = useCallback(({ event, start }: any) => {
+        const taskData = {
+            id: event.id,
+            title: event.title || 'Sem título',
+            description: event.description || '',
+            status: event.status || 'pendente',
+            priority: event.priority || 'media',
+            date: moment(start).format("YYYY-MM-DD")
+        }
+        console.log('Redimensionando tarefa:', taskData)
+        saveTask(taskData)
     }, [saveTask])
+
+    const handleToggleForm = useCallback(() => {
+        setModal({ toggle: true, content: { date: moment().format("YYYY-MM-DD") } })
+    }, [])
 
     if (!DnDCalendar) {
         return (
@@ -164,6 +195,8 @@ export default function Calendario() {
                     }}
                 />
             }
+
+            <Header onAddTaskClick={handleToggleForm} />
 
             <DnDCalendar
                 selectable
