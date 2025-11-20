@@ -28,13 +28,45 @@ services:
     volumes:
       - ./pgadmin/servers.json:/pgadmin4/servers.json
       - ./pgadmin/.pgpass:/tmp/.pgpass:ro
-    command: >
+    entrypoint: >
       /bin/sh -c "
-      cp /tmp/.pgpass /var/lib/pgadmin/.pgpass &&
-      chown pgadmin:root /var/lib/pgadmin/.pgpass &&
-      chmod 600 /var/lib/pgadmin/.pgpass &&
-      /entrypoint.sh
+        cp /tmp/.pgpass /var/lib/pgadmin/.pgpass &&
+        chown pgadmin:root /var/lib/pgadmin/.pgpass &&
+        chmod 600 /var/lib/pgadmin/.pgpass &&
+        /entrypoint.sh
       "
+
+  nodeapp:
+    image: node:20
+    container_name: backend
+    working_dir: /usr/src/app
+    volumes:
+      - "C:/Users/cathe/OneDrive/Área de Trabalho/kanbanize/kanbanize_back_end:/usr/src/app"
+    command: sh -c "npm install && node app.js"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_DATABASE=postgres
+      - DB_PORT=5432
+      - PGHOST=postgres
+
+
+  frontend:
+    image: node:20
+    container_name: frontend
+    working_dir: /usr/src/app
+    volumes:
+      - "C:/Users/cathe/OneDrive/Área de Trabalho/kanbanize/kanbanize_front_end:/usr/src/app"
+    command: sh -c "npm install && npx next dev -H 0.0.0.0 -p 3000"
+    ports:
+      - "3000:3000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
 
 
 volumes:

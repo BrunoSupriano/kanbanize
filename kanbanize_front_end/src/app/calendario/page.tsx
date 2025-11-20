@@ -8,29 +8,16 @@ import { getTasks, crateTask, updateTask } from '@/api/task'
 import TaskModal from '@/components/TaskModal'
 import moment from 'moment'
 import _ from 'lodash'
-import Header from "@/components/Header";  
 
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './rbc_css.css'
 
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 
-const DnDCalendar = withDragAndDrop(Calendar)
-
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
-    getDay,
-    locales: { 'pt-BR': ptBR },
-})
-
 export default function Calendario() {
+    const [DnDCalendar, setDnDCalendar] = useState<any>(null)
     const [tasks, setTasks] = useState<any>([])
     const [modal, setModal] = useState({ toggle: false, content: {} })
-    const [view, setView] = useState('month')
-    const [date, setDate] = useState(new Date())
     
     const localizer = useMemo(
         () =>
@@ -65,24 +52,25 @@ export default function Calendario() {
 
     const getTasksContent = useCallback(async () => {
         const tasks: any = await getTasks({})
-    setTasks(_.map(tasks.content, (data) => ({
-    id: data.id,
-    title: data.titulo,
-    description: data.descricao,
-    status: data.situacao,
-    priority: data.prioridade,
-    allDay: true, // <--- chave para forçar RBC a renderizar no topo
-    start: moment(data.data_vencimento).startOf('day').toDate(),
-    end: moment(data.data_vencimento).endOf('day').toDate(),
-    })))
+        setTasks(_.map(tasks.content, (data) => ({
+            id: data.id,
+            title: data.titulo,
+            description: data.descricao,
+            status: data.situacao,
+            priority: data.prioridade,
+            allDay: true,
+            start: moment(data.data_vencimento).startOf('day').toDate(),
+            end: moment(data.data_vencimento).endOf('day').toDate(),
+        })))
     }, [])
 
     useEffect(() => {
-        if (DnDCalendar) {
-            getTasksContent()
+        const load = async () => {
+            await getTasksContent()
         }
-        await getTasksContent()
-    }
+
+        load()
+    }, [getTasksContent])
 
     const handleSelectSlot = useCallback(({ start }: any) => {
         setModal({ toggle: true, content: { date: moment(start).utc().format("YYYY-MM-DD") } })
@@ -91,6 +79,28 @@ export default function Calendario() {
     const handleSelectEvent = useCallback((event: any) => {
         setModal({ toggle: true, content: event })
     }, [])
+
+    const saveTask = useCallback(async (task: any) => {
+        if (task.id) {
+            await updateTask(task.id, {
+                titulo: task.title,
+                descricao: task.description,
+                situacao: task.status,
+                prioridade: task.priority,
+                data_vencimento: task.date
+            })
+        } else {
+            await crateTask({
+                titulo: task.title,
+                descricao: task.description,
+                situacao: task.status,
+                prioridade: task.priority,
+                data_vencimento: task.date
+            })
+        }
+
+        await getTasksContent()
+    }, [getTasksContent])
 
     const handleEventDrop = useCallback(({ event, start, end }: any) => {
         saveTask({
@@ -110,7 +120,6 @@ export default function Calendario() {
         })
     }, [saveTask])
 
-    // Loading state enquanto o calendário não está pronto
     if (!DnDCalendar) {
         return (
             <div style={{ 
@@ -165,22 +174,8 @@ export default function Calendario() {
                 culture="pt-BR"
                 onSelectEvent={handleSelectEvent}
                 onSelectSlot={handleSelectSlot}
-                onEventDrop={({ event, start, end }) => {
-                    saveTask({
-                        ...event,
-                        start,
-                        end,
-                        date: moment(start).utc().format("YYYY-MM-DD")
-                    })
-                }}
-                onEventResize={({ event, start, end }) => {
-                    saveTask({
-                        ...event,
-                        start,
-                        end,
-                        date: moment(start).utc().format("YYYY-MM-DD")
-                    })
-                }}
+                onEventDrop={handleEventDrop}
+                onEventResize={handleEventResize}
                 resizable
                 draggableAccessor={() => true}
                 eventPropGetter={(event) => ({
