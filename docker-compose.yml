@@ -1,6 +1,20 @@
-version: "3.9"
-
 services:
+  frontend:
+    image: node:20
+    container_name: frontend
+    working_dir: /app
+    volumes:
+      - ./kanbanize_front_end:/app:cached
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: 100
+      WATCHPACK_POLLING: "true"
+    command: sh -c "npm install && npx next dev -H 0.0.0.0 -p 3000"
+
   postgres:
     image: postgres:17
     container_name: postgres
@@ -41,7 +55,8 @@ services:
     container_name: backend
     working_dir: /usr/src/app
     volumes:
-      - "C:/Users/cathe/OneDrive/Área de Trabalho/kanbanize/kanbanize_back_end:/usr/src/app"
+      - ./kanbanize_back_end:/usr/src/app
+      - /usr/src/app/node_modules
     command: sh -c "npm install && node app.js"
     ports:
       - "3001:3001"
@@ -53,24 +68,6 @@ services:
       - DB_DATABASE=postgres
       - DB_PORT=5432
       - PGHOST=postgres
-
-
-  frontend:
-    image: node:20
-    container_name: frontend
-    working_dir: /usr/src/app
-    volumes:
-      - ./kanbanize_front_end:/usr/src/app
-      - /usr/src/app/node_modules
-    command: sh -c "npm install && npm run dev -- --port 3000 --hostname 0.0.0.0"
-
-    ports:
-      - "3000:3000"
-    environment:
-      CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: 100
-      HOST: 0.0.0.0
-      PORT: 3000
 
 
 volumes:
