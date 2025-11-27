@@ -7,12 +7,22 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export interface Task {
   id?: string;
-  title?: string;
-  description?: string;
-  date?: string;
-  status?: string;
+  title: string;
+  description: string;
+  date: string;
+  status: "todo" | "in-progress" | "done";
   priority?: "baixa" | "média" | "alta" | "urgente";
 }
+
+interface BackendTask {
+  id: number | string;
+  titulo: string;
+  descricao: string;
+  data_vencimento: string;
+  situacao: "todo" | "in-progress" | "done";
+  prioridade: "baixa" | "média" | "alta" | "urgente";
+}
+
 
 export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; }> = ({ isFormVisible, onCloseForm }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -31,11 +41,14 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
       const res = await fetch("http://localhost:3001/task");
       if (!res.ok) throw new Error("Erro ao buscar tarefas");
       const data = await res.json();
-      const parsedTasks: Task[] = data.content.map((task: any) => ({
+      const parsedTasks: Task[] = data.content.map((task: BackendTask) => ({
         id: String(task.id),
         title: task.titulo,
         description: task.descricao,
-        date: task.data_vencimento?.split("T")[0] || "",
+        // Trata a data como UTC para evitar que o fuso horário local "puxe" a data para o dia anterior.
+        date: task.data_vencimento
+          ? new Date(task.data_vencimento.replace(/-/g, '\/').replace(/T.+/, '')).toLocaleDateString('en-CA')
+          : "",
         status: task.situacao,
         priority: task.prioridade,
       }));
@@ -56,21 +69,15 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
     setForm({ ...form, [name]: value });
   };
 
-  const mapToBackendStatus = {
-  "todo": "pendente",
-  "in-progress": "andamento",
-  "done": "concluido",
-  };
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const taskData = {
-      titulo: form.title,
-      descricao: form.description || "-",
-      situacao: form.status,
-      prioridade: form.priority,
-      data_vencimento: form.date
+      title: form.title,
+      description: form.description,
+      status: form.status as Task['status'],
+      priority: form.priority,
+      date: form.date,
+      idUser: 1 // SOLUÇÃO TEMPORÁRIA: Adicionado ID do usuário fixo. O ideal é vir da autenticação.
     };
     try {
       const res = await fetch("http://localhost:3001/task", {
@@ -97,10 +104,10 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
 
     const updateData = {
       title: taskToUpdate.title,
-      description: taskToUpdate.description || "-",
+      description: taskToUpdate.description,
       date: taskToUpdate.date,
       priority: taskToUpdate.priority,
-      status: newStatus,
+      status: newStatus as Task['status'],
     };
 
     try {
@@ -138,13 +145,16 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
 
   const handleSaveTask = async (updatedTask: Task) => {
     const updateData = {
-      titulo: updatedTask.title,
-      descricao: updatedTask.description || "-",
-      data_vencimento: updatedTask.date,
-      prioridade: updatedTask.priority,
-      situacao: mapToBackendStatus[updatedTask.status]
-
+      title: updatedTask.title,
+      description: updatedTask.description,
+      // Converte a data para o formato ISO completo que o backend espera,
+      // tratando problemas de fuso horário.
+      date: new Date(updatedTask.date).toISOString(),
+      priority: updatedTask.priority,
+      status: updatedTask.status
     };
+
+    if (!updatedTask.id) return;
 
     try {
       const res = await fetch(`http://localhost:3001/task/${updatedTask.id}`, {
@@ -258,7 +268,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="A Fazer"
           status="todo"
-          color="bg-blue-100 border border-blue-200"
+          color="bg-blue-300/20 backdrop-blur-lg rounded-2xl border border-blue-300/50 shadow-xl"
           tasks={tasks.filter((task) => task.status === "todo")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}
@@ -267,7 +277,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="Em Progresso"
           status="in-progress"
-          color="bg-blue-100 border border-blue-200"
+          color="bg-blue-300/20 backdrop-blur-lg rounded-2xl border border-blue-300/50 shadow-xl"
           tasks={tasks.filter((task) => task.status === "in-progress")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}
@@ -276,7 +286,7 @@ export const Board: React.FC<{ isFormVisible: boolean; onCloseForm: () => void; 
         <Column
           title="Concluído"
           status="done"
-          color="bg-blue-100 border border-blue-200"
+          color="bg-blue-300/20 backdrop-blur-lg rounded-2xl border border-blue-300/50 shadow-xl"
           tasks={tasks.filter((task) => task.status === "done")}
           onDrop={handleDrop}
           onDelete={handleDeleteTask}

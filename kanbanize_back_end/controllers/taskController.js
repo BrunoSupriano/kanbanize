@@ -6,9 +6,7 @@ class Task {
 
     async find(id) {
         await this.idValidation(id)
-
         const response = await pool.query('SELECT * FROM tarefas WHERE id = $1', [id]);
-
         return response?.rows?.[0]
     }
 
@@ -71,7 +69,7 @@ class Task {
                 descricao = $3,
                 data_vencimento = $4, 
                 situacao = $5,
-                prioridade = $6, 
+                prioridade = $6,
                 coluna_id = $7
             WHERE id = $1
         `, [id, body.title, body.description, body.date, body.status, body.priority, body.idColumn])

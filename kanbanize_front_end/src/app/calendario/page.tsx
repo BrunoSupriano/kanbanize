@@ -61,8 +61,10 @@ export default function Calendario() {
             priority: data.prioridade,
             date: data.data_vencimento,
             allDay: true,
-            start: moment(data.data_vencimento).startOf('day').toDate(),
-            end: moment(data.data_vencimento).endOf('day').toDate(),
+            // Interpreta a data UTC do backend e a converte para a data local correta,
+            // tratando-a como UTC para evitar o deslocamento de fuso horário.
+            start: moment.utc(data.data_vencimento).toDate(),
+            end: moment.utc(data.data_vencimento).toDate(),
         })))
     }, [])
 
@@ -75,73 +77,90 @@ export default function Calendario() {
     }, [getTasksContent])
 
     const handleSelectSlot = useCallback(({ start }: any) => {
-        setModal({ toggle: true, content: { date: moment(start).utc().format("YYYY-MM-DD") } })
+        setModal({ toggle: true, content: { date: moment(start).format("YYYY-MM-DD") } })
     }, [])
 
     const handleSelectEvent = useCallback((event: any) => {
-        setModal({ toggle: true, content: event })
+        // Formata a data para 'YYYY-MM-DD' antes de abrir o modal
+        const formattedEvent = {
+            ...event,
+            date: moment(event.date).format("YYYY-MM-DD"),
+        };
+        setModal({ toggle: true, content: formattedEvent })
     }, [])
-
-    const normalizePriority = (p: string) => 
-    p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 
     const saveTask = useCallback(async (task: any) => {
         try {
 
-            const mapStatus = {
-            "todo": "pendente",
-            "in-progress": "andamento",
-            "done": "concluido"
-            }
-
             const payload: any = {
             title: task.title,
             description: task.description || "-",
-            date: moment(task.date).toISOString(),
-            status: mapStatus[task.status] || "pendente",
-            priority: normalizePriority(task.priority || "media")
+            // Garante que a data seja tratada corretamente, independentemente do formato recebido (string ou objeto Date)
+            // O .utc() é crucial para evitar que o fuso horário local subtraia um dia.
+            date: moment.utc(task.date).toISOString(),
+            status: task.status || "todo", // Enviar o status diretamente
+            priority: task.priority || "baixa", // Enviar a prioridade diretamente
+            idUser: task.idUser || 1 // Garantir que idUser seja enviado
             };
 
-            if (task.idColumn) payload.idColumn = task.idColumn;
-            if (task.idUser) payload.idUser = task.idUser;
-            
             console.log('Salvando tarefa:', payload)
             
             if (task.id) {
                 await updateTask(task.id, payload)
             } else {
-                await crateTask(payload)
+                await crateTask(payload);
+                // Apenas busca os dados novamente ao criar uma NOVA tarefa
+                await getTasksContent();
             }
 
-            await getTasksContent()
         } catch (error) {
-            console.error('Erro ao salvar tarefa:', error)
+            console.error('Erro ao salvar tarefa:', error);
+            // Se der erro, busca os dados originais para reverter a mudança visual
             throw error
         }
     }, [getTasksContent])
 
-    const handleEventDrop = useCallback(({ event, start }: any) => {
-        const taskData = {
-            id: event.id,
-            title: event.title || 'Sem título',
-            description: event.description || '',
-            status: event.status || 'pendente',
-            priority: event.priority || 'media',
-            date: moment(start).format("YYYY-MM-DD")
-        }
-        console.log('Arrastando tarefa:', taskData)
-        saveTask(taskData)
-    }, [saveTask])
+    const handleEventDrop = useCallback(
+        ({ event, start, end }: any) => {
+            // Atualiza o estado local da UI de forma otimista
+            const newIsoDate = moment(start).utcOffset(0, true).toISOString();
+
+            setTasks((prevTasks: any) => {
+                const updatedTasks = prevTasks.map((t: any) =>
+                    t.id === event.id
+                        ? {
+                              ...t,
+                              start,
+                              end: start, // Garante que o evento ocupe um único dia
+                              date: newIsoDate, // ATUALIZA a propriedade 'date' customizada
+                          }
+                        : t
+                );
+                return updatedTasks;
+            });
+
+            // Prepara os dados para enviar ao backend
+            const { start: oldStart, end: oldEnd, ...restOfEvent } = event;
+            const taskData = {
+                ...restOfEvent,
+                date: newIsoDate,
+            };
+
+            // Envia a atualização para o backend em segundo plano
+            saveTask(taskData);
+        },
+        [saveTask]
+    );
 
     const handleEventResize = useCallback(({ event, start }: any) => {
         const taskData = {
             id: event.id,
             title: event.title || 'Sem título',
             description: event.description || '',
-            status: event.status || 'pendente',
-            priority: event.priority || 'media',
-            date: moment(start).format("YYYY-MM-DD")
+            status: event.status || 'todo',
+            priority: event.priority || 'baixa',
+            date: moment.utc(start).toISOString() // Tratar a data como UTC para evitar problemas de fuso
         }
         console.log('Redimensionando tarefa:', taskData)
         saveTask(taskData)
